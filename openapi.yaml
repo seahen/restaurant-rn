@@ -1,0 +1,127 @@
+openapi: 3.0.1
+info:
+  title: ConnectRN Restaurant
+  description: Quick Restaurant Demo
+  license:
+    name: MIT
+  version: '1'
+paths:
+  /v1/tables/free:
+    get:
+      summary: Check which tables are free and of what capacity.
+      operationId: getFreeTables
+      parameters:
+        - name: time
+          in: query
+          description: Point in time at which to check table status.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: List of tables (possibly empty) that are free at `time`.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+  /v1/reservations:
+    put:
+      summary: Make one or more reservations.
+      description: >-
+        Make one or more reservations. Each reservation succeeds or fails
+        independently, check return value to see which ones were successful.
+      operationId: makeReservations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReservationRequest'
+      responses:
+        '200':
+          description: >-
+            List of successfully committed reservations and list of requests
+            that failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+  '/v1/reservations/{id}':
+    delete:
+      summary: Cancel a specific reservation
+      operationId: cancelReservation
+      parameters:
+        - name: id
+          in: path
+          description: ID of the reservation to cancel.
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Cancellation was successful.
+        '404':
+          description: Reservation was not found to be cancelled.
+  /v1/users/me/reservations:
+    get:
+      summary: Get current user's reservations.
+      operationId: getCurrentReservations
+      responses:
+        '200':
+          description: List (possibly empty) of reservations made by the current user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+components:
+  schemas:
+    Table:
+      title: Information about an available table
+      type: object
+      properties:
+        id:
+          type: string
+        capacity:
+          type: integer
+          format: int32
+    Reservation:
+      title: A customer's reservation of a particular table at a particular time.
+      type: object
+      properties:
+        id:
+          type: string
+        time:
+          type: integer
+          format: int32
+        table:
+          type: string
+        persons:
+          type: integer
+          format: int32
+    ReservationRequest:
+      title: Request to make a reservation at a particular time for number of people
+      type: object
+      properties:
+        time:
+          type: integer
+          format: int32
+        persons:
+          type: integer
+          format: int32
+    ReservationResponse:
+      title: Response to reservation requests.
+      type: object
+      properties:
+        successful:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reservation'
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservationRequest'
